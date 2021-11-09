@@ -14,15 +14,17 @@ import net.minestom.server.world.biomes.BiomeParticles
 import de.articdive.jnoise.JNoise
 import de.articdive.jnoise.interpolation.InterpolationType
 import java.util.*
+import Utils
 import kotlin.math.abs
 
 
 fun main() {
-    val biomePerlinx = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.LINEAR).setFrequency(0.2).setSeed(555).build()
+    val biomePerlinx = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.LINEAR).setFrequency(0.8).setSeed(555).build()
     var printablestr = ""
     for(x in 1..10){
         for(y in 1..10){
-            val offsetperlin = (biomePerlinx.getNoise(x.toDouble(),y.toDouble())*10 ).toInt()
+            var offsetperlin = (biomePerlinx.getNoise(x.toDouble(),y.toDouble())*10 ).toInt()
+            offsetperlin = Utils.mapNoise(offsetperlin.toInt(), 1, 254)
             var stroffsetperlin = offsetperlin.toString()
             if (offsetperlin >= 0){
                 stroffsetperlin = "+$offsetperlin"
@@ -55,6 +57,7 @@ fun main() {
         event.player.gameMode = GameMode.CREATIVE
         val player = event.player
         player.isAllowFlying = true
+        player.refreshFlying(true)
         event.setSpawningInstance(instanceContainer)
         player.respawnPoint = Pos(0.0, 42.0, 0.0)
     }
@@ -73,26 +76,25 @@ fun main() {
     class Generatooooor : ChunkGenerator{
         private val seed = 555
         //private val seed = Random()
-        private val biomePerlinV = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.LINEAR).setFrequency(0.2).setSeed((seed).toLong()).build()
+        private val biomePerlinV = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.QUADRATIC).setFrequency(0.2).setSeed((seed).toLong()).build()
         //private val biomePerlinH = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.LINEAR).setFrequency(0.2).setSeed(-seed).build()
         override fun generateChunkData(batch: ChunkBatch, chunkX: Int, chunkZ: Int) {
             for (x in 0 until Chunk.CHUNK_SIZE_X) for (z in 0 until Chunk.CHUNK_SIZE_Z) {
                 val noiseOffset = biomePerlinV.getNoise(((chunkX)*16 + x).toDouble(),((chunkZ)*16 + z).toDouble())*10
-                fun getNoiseOffset(frequency: Int): Int{return (noiseOffset/frequency).toInt()}
+                fun getNoiseOffset(strength: Double): Int{return (noiseOffset/strength).toInt()}
                 fun placeBlockAtCurrentPlace(currentBlk: Block, y: Int){
                     batch.setBlock(x, y, z, currentBlk)
                 }
                 for (y in 0..254) {
+                    val noiseOffset3D = biomePerlinV.getNoise(((chunkX)*16 + x).toDouble(), ((chunkX)*16 + y).toDouble(),((chunkZ)*16 + z).toDouble())*20
                     //Must be setupped with "if" or switches because it puts one block at a time
                     if (y < 1) placeBlockAtCurrentPlace(Block.BEDROCK, y)
-                    else if(y < 10){
-                        if(/*getNoiseOffset(1) < 0 ||*/ abs(getNoiseOffset(1) - y) < 4){
-                            placeBlockAtCurrentPlace(Block.SAND, y)
+                    else {
+                        if(y <= Utils.map(noiseOffset.toInt()/2, -10, 10, 1, 20)){
+                            placeBlockAtCurrentPlace(Block.STONE, y)
                         }
-                        else{
-                            placeBlockAtCurrentPlace(Block.WATER, y)}
+                        //println(noiseOffset3D.toInt().toString() + " | "+ Utils.mapNoise(noiseOffset3D.toInt(), 1, 254))
                     }
-
                 }
             }
         }
