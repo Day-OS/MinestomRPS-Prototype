@@ -1,21 +1,17 @@
+import de.articdive.jnoise.JNoise
+import de.articdive.jnoise.interpolation.InterpolationType
 import net.minestom.server.MinecraftServer
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.GameMode
 import net.minestom.server.event.player.PlayerLoginEvent
 import net.minestom.server.event.player.PlayerTickEvent
-import net.minestom.server.instance.*
-import net.minestom.server.instance.batch.ChunkBatch
-import net.minestom.server.instance.block.Block
+import net.minestom.server.instance.InstanceContainer
+import net.minestom.server.instance.InstanceManager
 import net.minestom.server.network.packet.server.play.ChangeGameStatePacket
 import net.minestom.server.utils.NamespaceID
 import net.minestom.server.world.biomes.Biome
 import net.minestom.server.world.biomes.BiomeEffects
 import net.minestom.server.world.biomes.BiomeParticles
-import de.articdive.jnoise.JNoise
-import de.articdive.jnoise.interpolation.InterpolationType
-import java.util.*
-import Utils
-import kotlin.math.abs
 
 
 fun main() {
@@ -23,12 +19,9 @@ fun main() {
     var printablestr = ""
     for(x in 1..10){
         for(y in 1..10){
-            var offsetperlin = (biomePerlinx.getNoise(x.toDouble(),y.toDouble())*10 ).toInt()
-            offsetperlin = Utils.mapNoise(offsetperlin.toInt(), 1, 254)
-            var stroffsetperlin = offsetperlin.toString()
-            if (offsetperlin >= 0){
-                stroffsetperlin = "+$offsetperlin"
-            }
+            var offsetperlin = (biomePerlinx.getNoise(x.toDouble(),y.toDouble())*10).toInt()
+            offsetperlin = Utils.mapNoise(offsetperlin, 1, 40)
+            val stroffsetperlin = offsetperlin.toString()
             printablestr += "$stroffsetperlin | "
         }
         printablestr += "\n"
@@ -73,43 +66,8 @@ fun main() {
         //player.sendMessage(""+packetweather.value)
         //player.playerConnection.sendPacket(A)
     }
-    class Generatooooor : ChunkGenerator{
-        private val seed = 555
-        //private val seed = Random()
-        private val biomePerlinV = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.QUADRATIC).setFrequency(0.2).setSeed((seed).toLong()).build()
-        //private val biomePerlinH = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.LINEAR).setFrequency(0.2).setSeed(-seed).build()
-        override fun generateChunkData(batch: ChunkBatch, chunkX: Int, chunkZ: Int) {
-            for (x in 0 until Chunk.CHUNK_SIZE_X) for (z in 0 until Chunk.CHUNK_SIZE_Z) {
-                val noiseOffset = biomePerlinV.getNoise(((chunkX)*16 + x).toDouble(),((chunkZ)*16 + z).toDouble())*10
-                fun getNoiseOffset(strength: Double): Int{return (noiseOffset/strength).toInt()}
-                fun placeBlockAtCurrentPlace(currentBlk: Block, y: Int){
-                    batch.setBlock(x, y, z, currentBlk)
-                }
-                for (y in 0..254) {
-                    val noiseOffset3D = biomePerlinV.getNoise(((chunkX)*16 + x).toDouble(), ((chunkX)*16 + y).toDouble(),((chunkZ)*16 + z).toDouble())*20
-                    //Must be setupped with "if" or switches because it puts one block at a time
-                    if (y < 1) placeBlockAtCurrentPlace(Block.BEDROCK, y)
-                    else {
-                        if(y <= Utils.map(noiseOffset.toInt()/2, -10, 10, 1, 20)){
-                            placeBlockAtCurrentPlace(Block.STONE, y)
-                        }
-                        //println(noiseOffset3D.toInt().toString() + " | "+ Utils.mapNoise(noiseOffset3D.toInt(), 1, 254))
-                    }
-                }
-            }
-        }
 
-        override fun fillBiomes(biomes: Array<out Biome>, chunkX: Int, chunkZ: Int) {
-            Arrays.fill(biomes, MinecraftServer.getBiomeManager().getByName(NamespaceID.from("minecraft:plains")))
-        }
-
-        override fun getPopulators(): MutableList<ChunkPopulator>? {
-            return null
-        }
-
-    }
-
-    instanceContainer.chunkGenerator = Generatooooor()
+    instanceContainer.chunkGenerator = WorldGenerator()
 
     minecraftServer.start("localhost",25565)
 }
