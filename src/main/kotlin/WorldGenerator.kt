@@ -13,30 +13,37 @@ import java.util.*
 class WorldGenerator : ChunkGenerator {
     private val seed = 555
     //private val seed = Random()
-    private val biomePerlinV = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.QUADRATIC).setFrequency(0.01).setSeed((seed).toLong()).build()
+    private val biomePerlin1 = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.QUADRATIC).setFrequency(0.01).setSeed((seed).toLong()).build()
+    private val biomePerlin2 = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.QUADRATIC).setFrequency(0.02).setSeed((seed).toLong()).build()
     //private val biomePerlinH = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.LINEAR).setFrequency(0.2).setSeed(-seed).build()
     override fun generateChunkData(batch: ChunkBatch, chunkX: Int, chunkZ: Int) {
         for (x in 0 until Chunk.CHUNK_SIZE_X) for (z in 0 until Chunk.CHUNK_SIZE_Z) {
-            val noiseOffset = biomePerlinV.getNoise(((chunkX)*16 + x).toDouble(),((chunkZ)*16 + z).toDouble())*100
-            val height = Utils.map(noiseOffset.toInt(), -100, 100, 1, 40)
-            val heightm = Utils.map(noiseOffset.toInt(), -100, 100, 1, 80)
             fun placeBlockAtCurrentPlace(currentBlk: Block, y: Int){
                 batch.setBlock(x, y, z, currentBlk)
             }
             for (y in 0..254) {
-                val noiseOffset3D = biomePerlinV.getNoise(((chunkX)*16 + x).toDouble(), y.toDouble(),((chunkZ)*16 + z).toDouble())*100
-                val height3D = Utils.map(noiseOffset3D.toInt(), -100, 100, 1, 40)
+                val noiseOffset1 = biomePerlin1.getNoise(((chunkX)*16 + x).toDouble(), y.toDouble(),((chunkZ)*16 + z).toDouble())*100
+                val height1 = Utils.map(noiseOffset1.toInt(), -100, 100, 1, 40)
+                val noiseOffset2 = biomePerlin2.getNoise(((chunkX)*16 + x).toDouble(), y.toDouble(),((chunkZ)*16 + z).toDouble())*100
+                val height2 = Utils.map(noiseOffset2.toInt(), -100, 100, 1, 80)
                 //Must be setupped with "if" or switches because it puts one block at a time
                 if (y < 1) placeBlockAtCurrentPlace(Block.BEDROCK, y)
                 else {
-                    //println("" + noiseOffset + " | " + height)
+                    //-----ISLAND GENERATION
                     if( y <= 40
-                        && y < height3D
+                        && y < height1
                     ){
                         placeBlockAtCurrentPlace(Block.SAND, y)
                     }
+                    else if(y <= 20) placeBlockAtCurrentPlace(Block.WATER, y)
 
-                    //if(y== height) placeBlockAtCurrentPlace(Block.GRASS_BLOCK, y)
+                    //-----MOUNTAIN GENERATION
+                    if( y <= 80
+                        && height1 >= 20
+                        && y < height2
+                    ){
+                        placeBlockAtCurrentPlace(Block.SAND, y)
+                    }
                 }
             }
         }

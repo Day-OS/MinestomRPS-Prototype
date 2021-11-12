@@ -2,6 +2,7 @@ import de.articdive.jnoise.JNoise
 import de.articdive.jnoise.interpolation.InterpolationType
 import net.minestom.server.MinecraftServer
 import net.minestom.server.coordinate.Pos
+import net.minestom.server.entity.Entity
 import net.minestom.server.entity.GameMode
 import net.minestom.server.event.player.PlayerLoginEvent
 import net.minestom.server.event.player.PlayerTickEvent
@@ -15,6 +16,7 @@ import net.minestom.server.world.biomes.BiomeParticles
 
 
 fun main() {
+    /*
     val biomePerlinx = JNoise.newBuilder().perlin().setInterpolation(InterpolationType.LINEAR).setFrequency(0.8).setSeed(555).build()
     var printablestr = ""
     for(x in 1..10){
@@ -27,6 +29,7 @@ fun main() {
         printablestr += "\n"
     }
     println(printablestr)
+    */
     val bioma = Biome.builder().effects(
         BiomeEffects.builder()
             .waterColor(0xfca980)
@@ -57,11 +60,12 @@ fun main() {
     globalEventHandler.addListener(
         PlayerTickEvent::class.java
     ) { event: PlayerTickEvent ->
+        //event.player.entityMeta.pose = Entity.Pose.SLEEPING
         event.player.gameMode = GameMode.CREATIVE
-        //val player = event.player
         val a = ChangeGameStatePacket()
         a.reason = ChangeGameStatePacket.Reason.RAIN_LEVEL_CHANGE
-        a.value = 1F//player.position.pitch/90
+        a.value = 1F
+        //player.position.pitch/90
         //val packetweather = ChangeGameStatePacket()
         //player.sendMessage(""+packetweather.value)
         //player.playerConnection.sendPacket(A)
